@@ -1,11 +1,26 @@
 'use strict';
 
+var $ = require('jquery'),
+    GH = require('./js/github'),
+    Chooser = require('./js/chooser'),
+    Analyzer = require('./js/analyzer'),
+    Core = require('./js/core');
 
-var gh = require('./js/github');
+window.$ = $;
+window.GH = GH;
+window.Chooser = Chooser;
+window.Analyzer = Analyzer;
+window.Core = Core;
 
-window.gh = gh;
+var c = new Chooser(),
+    a = new Analyzer();
 
-module.exports = {
+GH.dir(c.setPaths.bind(c));
 
-};
+c.listen(function(choice) {
+    GH.file(a.displayFile.bind(a));
+});
+
+
+module.exports = {};
 

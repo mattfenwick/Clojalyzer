@@ -1,5 +1,5 @@
 {
-  "name": "The Clojalyzer",
+  "name": "Clojalyzer",
   "version": "0.0.1",
   "scripts": {
     "test": "mocha --reporter spec test/",
@@ -7,6 +7,8 @@
     "grunt": "grunt --force"
   },
   "dependencies": {
+    "clojarse-js": "0.2.0",
+    "genhtml-js": "0.1.0",
     "jquery": "^2.1.0",
     "buffer": "^2.5.0"
   },
