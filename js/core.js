@@ -2,9 +2,8 @@
 
 var C = require('clojarse-js');
 
-function parse(text) {
-    return C.parseAst(text);
-}
+
+var parse = C.parseAst;
 
 function isDefn(node) {
     if ( ( node.type !== 'list' ) ||
@@ -63,9 +62,14 @@ function getToplevelDefns(ast) {
     return funcs;
 }
 
+function parseAndExtract(text) {
+    return C.parseAst(text).fmap(getToplevelDefns);
+}
+
 
 module.exports = {
     'parse'           : parse           ,
+    'parseAndExtract' : parseAndExtract ,
     'extractFuncInfo' : extractFuncInfo ,
     'getToplevelDefns': getToplevelDefns,
 };

@@ -11,6 +11,7 @@ var $ = require('jquery'),
 function Chooser() {
     this.div = $("#input");
     this.listeners = [];
+    this.fileMap = {};
 }
 
 function getOptions(fileMap) {
@@ -24,14 +25,17 @@ function getOptions(fileMap) {
 Chooser.prototype.setPaths = function(fileMap) {
     // put paths into a dropdown
     // add a change listener
+    this.fileMap = fileMap;
     this.div.empty();
     var select = elem('select', {}, getOptions(fileMap)),
         self = this;
     this.div.append(G.serialize.serialize(select));
-    var sel = this.div.find('select');
-    sel.change(function() {
-        self.notify(sel.val());
-    }).change();
+    var s = this.div.find('select');
+    s.change(function() {
+        self.notify(self.fileMap[s.val()]);
+//    }).change();
+    });
+    s.val('');
 };
 
 Chooser.prototype.notify = function() {

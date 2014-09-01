@@ -15,18 +15,21 @@ function extractPaths(items) {
 }
 
 function dir(callback, path) {
-    var paths;
+    var response,
+        stat;
     function f(data, status, _jqXHR) {
         if ( status === 'error' ) {
             callback(data, 'request error');
         } else if ( status === 'success' ) {
             if ( data.meta.status === 200 ) {
                 try {
-                    paths = extractPaths(data.data);
-                    callback(paths, 'success');
+                    response = extractPaths(data.data);
+                    stat = 'success';
                 } catch(e) {
-                    callback(e, 'unexpected error');
+                    response = e;
+                    stat = 'data error';
                 }
+                callback(response, stat);
             } else {
                 callback(data, 'api error');
             }
@@ -47,32 +50,34 @@ function decode(base64string) {
 function file(callback, path) {
     // callback receives 2 args:
     //   1. data
-    //   2. status -- 'request error' | 'api error' | 'unexpected error' | 'success'
+    //   2. status -- 'request error' | 'api error' | 'data error' | 'success'
     function f(data, status, _jqXHR) {
         // provides an adapter to simplify `callback`:
         //   1. doesn't pass the jqXHR
         //   2. three statuses:
         //      success, api error, request error
         //   3. for success, extracts and base64-decodes content
-        var text;
+        var response,
+            stat;
         if ( status === 'error' ) {
             callback(data, 'request error');
         } else if ( status === 'success' ) {
             if ( data.meta.status === 200 ) {
                 try {
-                    text = decode(data.data.content);
-                    callback(text, 'success');
+                    response = decode(data.data.content);
+                    stat = 'success';
                 } catch(e) {
-                    // TODO maybe should be 'invalid data error', b/c it's not really unexpected
-                    callback(e, 'unexpected error');
+                    response = e;
+                    stat = 'data error';
                 }
+                callback(response, stat);
             } else {
                 callback(data, 'api error');
             }
         }
     }
     $.ajax({
-        'url'       : path ? path : 'https://api.github.com/repos/clojure/clojure/contents/src/clj/clojure/core.clj',
+        'url'       : path ? path : 'https://api.github.com/repos/clojure/clojure/contents/src/clj/clojure/edn.clj',
         'dataType'  : 'jsonp',
         'success'   : f      ,
         'error'     : f      ,

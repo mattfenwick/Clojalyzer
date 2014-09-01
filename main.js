@@ -17,8 +17,8 @@ var c = new Chooser(),
 
 GH.dir(c.setPaths.bind(c));
 
-c.listen(function(choice) {
-    GH.file(a.displayFile.bind(a));
+c.listen(function(url) {
+    GH.file(a.displayFile.bind(a), url);
 });
 
 
