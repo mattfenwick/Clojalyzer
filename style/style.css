@@ -1,0 +1,30 @@
+body > div {
+    border: solid black 1px;
+    padding: 5px;
+    margin: 5px;
+}
+
+#input > select {
+    font-size: 125%;
+    
+}
+
+.instructions {
+    font-size: 150%;
+    margin: 5px;
+}
+
+#output th, #output td {
+    border: solid black 1px;
+    padding: 5px;
+    min-width: 150px;
+}
+
+#output tr {
+    background: #ffff88;
+}
+
+#output td {
+    background: #eee9e9;
+}
+
