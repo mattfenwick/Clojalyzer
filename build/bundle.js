@@ -1,124 +1,6 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
-var $ = require('jquery'),
-    G = require('genhtml-js'),
-    H = G.html,
-    elem = H.elem,
-    Core = require('./core');
-
-// tasks
-//   1. display file
-//      what about parsing? parse errors? request, api, network errors?
-//   2. respond to clicks by displaying more information
-
-function Analyzer() {
-    this.div = $("#output");
-}
-
-function formatRow(rowData) {
-    var pos = rowData.position;
-    return H.tr({},
-                H.td({}, rowData.name),
-                H.td({}, pos[0] + ''),
-                H.td({}, H.pre({}, '\n' + rowData.doc)));
-}
-
-Analyzer.prototype.success = function(response) {
-    var c = Core.parseAndExtract(response);
-    if ( c.status !== 'success' ) {
-        this.div.append('parse failure -- ' + JSON.stringify(c.value));
-        return;
-    }
-    var header = H.tr({},
-                      H.th({}, 'Function name'),
-                      H.th({}, 'Line number'),
-                      H.th({}, 'Documentation string')),
-        rows = [header].concat(c.value.map(formatRow)),
-        table = elem('table', {}, rows);
-    this.div.append(G.serialize.serialize(table));
-};
-
-Analyzer.prototype.displayFile = function(response, status) {
-    console.log('got a response -- ' + status);
-    this.div.empty();
-    switch (status) {
-        case 'success':
-            this.success(response);
-            break;
-        case 'request error':
-        case 'api error':
-        case 'data error':
-        default:
-            this.div.append(status);
-            break;
-    }
-};
-
-
-module.exports = Analyzer;
-
-
-},{"./core":3,"genhtml-js":20,"jquery":24}],2:[function(require,module,exports){
-'use strict';
-
-var $ = require('jquery'),
-    G = require('genhtml-js'),
-    elem = G.html.elem;
-
-// tasks
-//   1. receive a map of filename->url, and display them
-//   2. respond to mouse clicks, sending off the appropriate file
-
-function Chooser() {
-    this.div = $("#input");
-    this.listeners = [];
-    this.fileMap = {};
-}
-
-function getOptions(fileMap) {
-    var opts = [];
-    for (var key in fileMap) {
-        opts.push(elem('option', {}, key));
-    }
-    return opts;
-}
-
-Chooser.prototype.setPaths = function(fileMap) {
-    // put paths into a dropdown
-    // add a change listener
-    this.fileMap = fileMap;
-    this.div.empty();
-    var select = elem('select', {}, getOptions(fileMap)),
-        self = this;
-    this.div.append(G.serialize.serialize(select));
-    var s = this.div.find('select');
-    s.change(function() {
-        self.notify(self.fileMap[s.val()]);
-//    }).change();
-    });
-    s.val('');
-};
-
-Chooser.prototype.notify = function() {
-    // send event off to listeners
-    var args = Array.prototype.slice.call(arguments);
-    this.listeners.forEach(function(f) {
-        f.apply(null, args);
-    });
-};
-
-Chooser.prototype.listen = function(l) {
-    this.listeners.push(l);
-};
-
-
-module.exports = Chooser;
-
-
-},{"genhtml-js":20,"jquery":24}],3:[function(require,module,exports){
-'use strict';
-
 var C = require('clojarse-js');
 
 
@@ -194,12 +76,17 @@ module.exports = {
 };
 
 
-},{"clojarse-js":9}],4:[function(require,module,exports){
+},{"clojarse-js":10}],2:[function(require,module,exports){
 'use strict';
 
 
 var $ = require('jquery'),
     Buff = require('buffer/').Buffer;
+
+
+function Github() {
+
+}
 
 function extractPaths(items) {
     var paths = {};
@@ -211,7 +98,7 @@ function extractPaths(items) {
     return paths;
 }
 
-function dir(callback, path) {
+Github.prototype.dir = function(callback, path) {
     var response,
         stat;
     function f(data, status, _jqXHR) {
@@ -238,13 +125,13 @@ function dir(callback, path) {
         'success'   : f      ,
         'error'     : f      ,
     });
-}
+};
 
 function decode(base64string) {
     return new Buff(base64string, 'base64').toString();
 }
 
-function file(callback, path) {
+Github.prototype.file = function(callback, path) {
     // callback receives 2 args:
     //   1. data
     //   2. status -- 'request error' | 'api error' | 'data error' | 'success'
@@ -279,48 +166,225 @@ function file(callback, path) {
         'success'   : f      ,
         'error'     : f      ,
     });
-}
-
-
-module.exports = {
-    'dir'           : dir           ,
-    'file'          : file          ,
-    'decode'        : decode        ,
-    'extractPaths'  : extractPaths  ,
-    'Buffer'        : Buff          ,
-    '$'             : $             ,
 };
 
 
-},{"buffer/":6,"jquery":24}],5:[function(require,module,exports){
+module.exports = {
+    'Github'      : Github      ,
+    'extractPaths': extractPaths,
+    'decode'      : decode      ,
+};
+
+
+},{"buffer/":7,"jquery":25}],3:[function(require,module,exports){
+'use strict';
+
+
+function Model(dataAccess) {
+    this.dataAccess = dataAccess;
+    this.listeners = [];
+    this.repo = undefined;
+    this.file = undefined;
+}
+
+Model.prototype.setRepo = function(path) {
+    var self = this;
+    function f(response, status) {
+        self.repo = {
+            'path'    : path    ,
+            'response': response,
+            'status'  : status  ,
+        };
+        self.notify('setRepo');
+    }
+    this.dataAccess.dir(f, path);
+};
+
+Model.prototype.setFile = function(filename) {
+    var self = this,
+        url = self.repo.path + '/' + filename;
+    function f(response, status) {
+        self.file = {
+            'filename': filename,
+            'response': response,
+            'status'  : status  ,
+        };
+        self.notify('setFile');
+    }
+    this.dataAccess.file(f, url);
+};
+
+Model.prototype.notify = function() {
+    // send event off to listeners
+    var args = Array.prototype.slice.call(arguments);
+    this.listeners.forEach(function(f) {
+        f.apply(null, args);
+    });
+};
+
+Model.prototype.listen = function(l) {
+    this.listeners.push(l);
+};
+
+
+
+module.exports = Model;
+
+
+},{}],4:[function(require,module,exports){
 'use strict';
 
 var $ = require('jquery'),
-    GH = require('./js/github'),
-    Chooser = require('./js/chooser'),
-    Analyzer = require('./js/analyzer'),
+    G = require('genhtml-js'),
+    H = G.html,
+    elem = H.elem,
+    Core = require('./../core');
+
+// tasks
+//   1. display file
+//      what about parsing? parse errors? request, api, network errors?
+//   2. respond to clicks by displaying more information
+
+function Analyzer() {
+    this.div = $("#output");
+}
+
+function formatRow(rowData) {
+    var pos = rowData.position;
+    return H.tr({},
+                H.td({}, rowData.name),
+                H.td({}, pos[0] + ''),
+                H.td({}, H.pre({}, '\n' + rowData.doc)));
+}
+
+Analyzer.prototype.success = function(response) {
+    var c = Core.parseAndExtract(response);
+    if ( c.status !== 'success' ) {
+        this.div.append('parse failure -- ' + JSON.stringify(c.value));
+        return;
+    }
+    var header = H.tr({},
+                      H.th({}, 'Function name'),
+                      H.th({}, 'Line number'),
+                      H.th({}, 'Documentation string')),
+        rows = [header].concat(c.value.map(formatRow)),
+        table = elem('table', {}, rows);
+    this.div.append(G.serialize.serialize(table));
+};
+
+Analyzer.prototype.displayFile = function(response, status) {
+    console.log('got a response -- ' + status);
+    this.div.empty();
+    switch (status) {
+        case 'success':
+            this.success(response);
+            break;
+        case 'request error':
+        case 'api error':
+        case 'data error':
+        default:
+            this.div.append(status);
+            break;
+    }
+};
+
+
+module.exports = Analyzer;
+
+
+},{"./../core":1,"genhtml-js":21,"jquery":25}],5:[function(require,module,exports){
+'use strict';
+
+var $ = require('jquery'),
+    G = require('genhtml-js'),
+    elem = G.html.elem;
+
+// tasks
+//   1. receive a map of filename->url, and display them
+//   2. respond to mouse clicks, sending off the appropriate file
+
+function Chooser() {
+    this.div = $("#input");
+    this.listeners = [];
+}
+
+function getOption(filename) {
+    return elem('option', {}, filename);
+}
+
+Chooser.prototype.setPaths = function(filenames) {
+    // put paths into a dropdown
+    // add a change listener
+    this.div.empty();
+    var select = elem('select', {}, filenames.map(getOption));
+    this.div.append(G.serialize.serialize(select));
+    var s = this.div.find('select'),
+        self = this;
+    s.change(function() {
+        self.notify(s.val());
+    });
+    s.val('');
+};
+
+Chooser.prototype.notify = function() {
+    // send event off to listeners
+    var args = Array.prototype.slice.call(arguments);
+    this.listeners.forEach(function(f) {
+        f.apply(null, args);
+    });
+};
+
+Chooser.prototype.listen = function(l) {
+    this.listeners.push(l);
+};
+
+
+module.exports = Chooser;
+
+
+},{"genhtml-js":21,"jquery":25}],6:[function(require,module,exports){
+'use strict';
+
+var $ = require('jquery'),
+    Github = require('./js/github').Github,
+    Model = require('./js/model'),
+    Chooser = require('./js/views/chooser'),
+    Analyzer = require('./js/views/analyzer'),
     Core = require('./js/core');
 
 window.$ = $;
-window.GH = GH;
+window.Github = Github;
 window.Chooser = Chooser;
 window.Analyzer = Analyzer;
 window.Core = Core;
 
-var c = new Chooser(),
+var gh = new Github(),
+    model = new Model(gh),
+    c = new Chooser(),
     a = new Analyzer();
 
-GH.dir(c.setPaths.bind(c));
-
-c.listen(function(url) {
-    GH.file(a.displayFile.bind(a), url);
+model.listen(function(message) {
+    if ( message === 'setRepo' ) {
+        c.setPaths(Object.keys(model.repo.response));
+    }
 });
 
+c.listen(function(filename) {
+    model.setFile(filename);
+});
+
+model.listen(function(message) {
+    if ( message === 'setFile' ) {
+        a.displayFile(model.file.response, model.file.status);
+    }
+});
+
+model.setRepo('https://api.github.com/repos/clojure/clojure/contents/src/clj/clojure');
 
 module.exports = {};
 
 
-},{"./js/analyzer":1,"./js/chooser":2,"./js/core":3,"./js/github":4,"jquery":24}],6:[function(require,module,exports){
+},{"./js/core":1,"./js/github":2,"./js/model":3,"./js/views/analyzer":4,"./js/views/chooser":5,"jquery":25}],7:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -1491,7 +1555,7 @@ function assert (test, message) {
   if (!test) throw new Error(message || 'Failed assertion')
 }
 
-},{"base64-js":7,"ieee754":8}],7:[function(require,module,exports){
+},{"base64-js":8,"ieee754":9}],8:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -1613,7 +1677,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 exports.read = function(buffer, offset, isLE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -1699,7 +1763,7 @@ exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 var P = require('./lib/parser'),
@@ -1734,7 +1798,7 @@ module.exports = {
 };
 
 
-},{"./lib/ast":10,"./lib/astbuilder":11,"./lib/parser":12}],10:[function(require,module,exports){
+},{"./lib/ast":11,"./lib/astbuilder":12,"./lib/parser":13}],11:[function(require,module,exports){
 'use strict';
 
 var S = require('data-js').Set;
@@ -1843,7 +1907,7 @@ module.exports = {
 };
 
 
-},{"data-js":13}],11:[function(require,module,exports){
+},{"data-js":14}],12:[function(require,module,exports){
 'use strict';
 
 var A = require('./ast'),
@@ -2049,7 +2113,7 @@ module.exports = {
 };
 
 
-},{"./ast":10,"data-js":13}],12:[function(require,module,exports){
+},{"./ast":11,"data-js":14}],13:[function(require,module,exports){
 'use strict';
 
 var u = require('unparse-js'),
@@ -2531,7 +2595,7 @@ module.exports = {
 };
 
 
-},{"data-js":13,"unparse-js":16}],13:[function(require,module,exports){
+},{"data-js":14,"unparse-js":17}],14:[function(require,module,exports){
 'use strict';
 
 var D = require('./lib/dict.js'),
@@ -2544,7 +2608,7 @@ module.exports = {
 };
 
 
-},{"./lib/dict.js":14,"./lib/set.js":15}],14:[function(require,module,exports){
+},{"./lib/dict.js":15,"./lib/set.js":16}],15:[function(require,module,exports){
 'use strict';
 
 
@@ -2619,7 +2683,7 @@ Dict.prototype.toString = function() {
 module.exports = Dict;
 
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 var D = require('./dict');
@@ -2661,7 +2725,7 @@ Set.prototype.toString = function() {
 module.exports = Set;
 
 
-},{"./dict":14}],16:[function(require,module,exports){
+},{"./dict":15}],17:[function(require,module,exports){
 'use strict';
 
 
@@ -2674,7 +2738,7 @@ module.exports = {
 };
 
 
-},{"./lib/combinators.js":17,"./lib/cst.js":18,"./lib/maybeerror.js":19}],17:[function(require,module,exports){
+},{"./lib/combinators.js":18,"./lib/cst.js":19,"./lib/maybeerror.js":20}],18:[function(require,module,exports){
 "use strict";
 
 var M = require('./maybeerror.js');
@@ -3212,7 +3276,7 @@ module.exports = {
 };
 
 
-},{"./maybeerror.js":19}],18:[function(require,module,exports){
+},{"./maybeerror.js":20}],19:[function(require,module,exports){
 "use strict";
 
 var C = require('./combinators.js');
@@ -3359,7 +3423,7 @@ module.exports = {
 };
 
 
-},{"./combinators.js":17}],19:[function(require,module,exports){
+},{"./combinators.js":18}],20:[function(require,module,exports){
 "use strict";
 
 var STATUSES = {
@@ -3431,7 +3495,7 @@ MaybeError.zero = new MaybeError('failure', undefined);
 module.exports = MaybeError;
 
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 
@@ -3442,7 +3506,7 @@ module.exports = {
 };
 
 
-},{"./lib/html.js":21,"./lib/model.js":22,"./lib/serialize.js":23}],21:[function(require,module,exports){
+},{"./lib/html.js":22,"./lib/model.js":23,"./lib/serialize.js":24}],22:[function(require,module,exports){
 'use strict';
 
 var model = require('./model.js');
@@ -3506,7 +3570,7 @@ module.exports = {
 };
 
 
-},{"./model.js":22}],22:[function(require,module,exports){
+},{"./model.js":23}],23:[function(require,module,exports){
 'use strict';
 
 
@@ -3577,7 +3641,7 @@ module.exports = {
 };
 
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 var model = require('./model.js');
@@ -3654,7 +3718,7 @@ module.exports = {
 };
 
 
-},{"./model.js":22}],24:[function(require,module,exports){
+},{"./model.js":23}],25:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.0
  * http://jquery.com/
@@ -12767,4 +12831,4 @@ return jQuery;
 
 }));
 
-},{}]},{},[5])
+},{}]},{},[6])

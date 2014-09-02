@@ -4,7 +4,7 @@ var $ = require('jquery'),
     G = require('genhtml-js'),
     H = G.html,
     elem = H.elem,
-    Core = require('./core');
+    Core = require('./../core');
 
 // tasks
 //   1. display file

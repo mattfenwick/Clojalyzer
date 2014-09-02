@@ -4,6 +4,11 @@
 var $ = require('jquery'),
     Buff = require('buffer/').Buffer;
 
+
+function Github() {
+
+}
+
 function extractPaths(items) {
     var paths = {};
     items.forEach(function(entry) {
@@ -14,7 +19,7 @@ function extractPaths(items) {
     return paths;
 }
 
-function dir(callback, path) {
+Github.prototype.dir = function(callback, path) {
     var response,
         stat;
     function f(data, status, _jqXHR) {
@@ -41,13 +46,13 @@ function dir(callback, path) {
         'success'   : f      ,
         'error'     : f      ,
     });
-}
+};
 
 function decode(base64string) {
     return new Buff(base64string, 'base64').toString();
 }
 
-function file(callback, path) {
+Github.prototype.file = function(callback, path) {
     // callback receives 2 args:
     //   1. data
     //   2. status -- 'request error' | 'api error' | 'data error' | 'success'
@@ -82,15 +87,12 @@ function file(callback, path) {
         'success'   : f      ,
         'error'     : f      ,
     });
-}
+};
 
 
 module.exports = {
-    'dir'           : dir           ,
-    'file'          : file          ,
-    'decode'        : decode        ,
-    'extractPaths'  : extractPaths  ,
-    'Buffer'        : Buff          ,
-    '$'             : $             ,
+    'Github'      : Github      ,
+    'extractPaths': extractPaths,
+    'decode'      : decode      ,
 };
 
