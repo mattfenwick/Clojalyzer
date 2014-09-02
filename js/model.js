@@ -8,9 +8,9 @@ function Model(dataAccess) {
     this.file = undefined;
 }
 
-Model.prototype.setRepo = function(user, repo) {
+Model.prototype.setRepo = function(user, repo, branch) {
     var self = this,
-        path = 'https://api.github.com/repos/' + user + '/' + repo + '/git/trees/master?recursive=1'
+        path = 'https://api.github.com/repos/' + user + '/' + repo + '/git/trees/' + branch + '?recursive=1';
     function f(response, status) {
         self.repo = {
             'user'    : user    ,

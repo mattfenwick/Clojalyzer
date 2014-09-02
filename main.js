@@ -20,9 +20,10 @@ window.model = model;
 
 $("#githubuser").val("clojure");
 $("#githubrepo").val("clojure");
+$("#githubbranch").val("master");
 
-rc.listen(function(username, repo) {
-    model.setRepo(username, repo);
+rc.listen(function(username, repo, branch) {
+    model.setRepo(username, repo, branch);
 });
 
 model.listen(function(message) {

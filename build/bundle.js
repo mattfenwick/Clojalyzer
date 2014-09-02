@@ -109,7 +109,7 @@ Github.prototype.dir = function(callback, path) {
     function f(data, status, _jqXHR) {
         var response,
             stat;
-        self.log.push({'type': 'AJAX tree request', 'data': data, 'status': status, 'jqXHR': _jqXHR});
+        self.log.push({'type': 'AJAX tree request', 'data': data, 'status': status, 'jqXHR': _jqXHR, 'path': path});
         if ( status === 'error' ) {
             callback(data, 'request error');
         } else if ( status === 'success' ) {
@@ -152,7 +152,7 @@ Github.prototype.file = function(callback, path) {
         //   3. for success, extracts and base64-decodes content
         var response,
             stat;
-        self.log.push({'type': 'AJAX file request', 'data': data, 'status': status, 'jqXHR': _jqXHR});
+        self.log.push({'type': 'AJAX file request', 'data': data, 'status': status, 'jqXHR': _jqXHR, 'path': path});
         if ( status === 'error' ) {
             callback(data, 'request error');
         } else if ( status === 'success' ) {
@@ -183,6 +183,7 @@ module.exports = {
     'Github'      : Github      ,
     'extractPaths': extractPaths,
     'decode'      : decode      ,
+    'endsWith'    : endsWith    ,
 };
 
 
@@ -197,9 +198,9 @@ function Model(dataAccess) {
     this.file = undefined;
 }
 
-Model.prototype.setRepo = function(user, repo) {
+Model.prototype.setRepo = function(user, repo, branch) {
     var self = this,
-        path = 'https://api.github.com/repos/' + user + '/' + repo + '/git/trees/master?recursive=1'
+        path = 'https://api.github.com/repos/' + user + '/' + repo + '/git/trees/' + branch + '?recursive=1';
     function f(response, status) {
         self.repo = {
             'user'    : user    ,
@@ -382,8 +383,9 @@ function RepoChooser() {
     var self = this;
     $("#clojalyze").click(function() {
         var username = $("#githubuser").val(),
-            repo     = $("#githubrepo").val();
-        self.notify(username, repo);
+            repo     = $("#githubrepo").val(),
+            branch   = $("#githubbranch").val();
+        self.notify(username, repo, branch);
     });
 }
 
@@ -425,9 +427,10 @@ window.model = model;
 
 $("#githubuser").val("clojure");
 $("#githubrepo").val("clojure");
+$("#githubbranch").val("master");
 
-rc.listen(function(username, repo) {
-    model.setRepo(username, repo);
+rc.listen(function(username, repo, branch) {
+    model.setRepo(username, repo, branch);
 });
 
 model.listen(function(message) {

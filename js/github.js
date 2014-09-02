@@ -30,7 +30,7 @@ Github.prototype.dir = function(callback, path) {
     function f(data, status, _jqXHR) {
         var response,
             stat;
-        self.log.push({'type': 'AJAX tree request', 'data': data, 'status': status, 'jqXHR': _jqXHR});
+        self.log.push({'type': 'AJAX tree request', 'data': data, 'status': status, 'jqXHR': _jqXHR, 'path': path});
         if ( status === 'error' ) {
             callback(data, 'request error');
         } else if ( status === 'success' ) {
@@ -73,7 +73,7 @@ Github.prototype.file = function(callback, path) {
         //   3. for success, extracts and base64-decodes content
         var response,
             stat;
-        self.log.push({'type': 'AJAX file request', 'data': data, 'status': status, 'jqXHR': _jqXHR});
+        self.log.push({'type': 'AJAX file request', 'data': data, 'status': status, 'jqXHR': _jqXHR, 'path': path});
         if ( status === 'error' ) {
             callback(data, 'request error');
         } else if ( status === 'success' ) {

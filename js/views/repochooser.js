@@ -8,8 +8,9 @@ function RepoChooser() {
     var self = this;
     $("#clojalyze").click(function() {
         var username = $("#githubuser").val(),
-            repo     = $("#githubrepo").val();
-        self.notify(username, repo);
+            repo     = $("#githubrepo").val(),
+            branch   = $("#githubbranch").val();
+        self.notify(username, repo, branch);
     });
 }
 

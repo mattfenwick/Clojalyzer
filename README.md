@@ -17,8 +17,8 @@ internet connection to grab data from Github):
 
 ## Instructions ##
 
- 1. you'll need to give **The Clojalyzer** the github username and 
-    repository name you want it to Clojalyze -- try this awesome
+ 1. you'll need to give **The Clojalyzer** the github username,
+    repository, and branch you want it to Clojalyze -- try this awesome
     [search](https://github.com/search?q=clojure) to find some cool Clojure 
     repos!
  
