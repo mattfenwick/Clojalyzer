@@ -24,6 +24,14 @@ Model.prototype.setRepo = function(path) {
 Model.prototype.setFile = function(filename) {
     var self = this,
         url = self.repo.response[filename];
+    if ( !url ) {
+        self.file = {
+            'filename': filename          ,
+            'status'  : 'illegal filename',
+        };
+        self.notify('setFile');
+        return;
+    }
     function f(response, status) {
         self.file = {
             'filename': filename,

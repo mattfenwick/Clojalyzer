@@ -5,8 +5,8 @@ var $ = require('jquery'),
     Buff = require('buffer/').Buffer;
 
 
-function Github() {
-
+function Github(log) {
+    this.log = log;
 }
 
 function extractPaths(items) {
@@ -20,9 +20,11 @@ function extractPaths(items) {
 }
 
 Github.prototype.dir = function(callback, path) {
-    var response,
-        stat;
+    var self = this;
     function f(data, status, _jqXHR) {
+        var response,
+            stat;
+        self.log.push({'type': 'AJAX tree request', 'data': data, 'status': status, 'jqXHR': _jqXHR});
         if ( status === 'error' ) {
             callback(data, 'request error');
         } else if ( status === 'success' ) {
@@ -56,6 +58,7 @@ Github.prototype.file = function(callback, path) {
     // callback receives 2 args:
     //   1. data
     //   2. status -- 'request error' | 'api error' | 'data error' | 'success'
+    var self = this;
     function f(data, status, _jqXHR) {
         // provides an adapter to simplify `callback`:
         //   1. doesn't pass the jqXHR
@@ -64,6 +67,7 @@ Github.prototype.file = function(callback, path) {
         //   3. for success, extracts and base64-decodes content
         var response,
             stat;
+        self.log.push({'type': 'AJAX file request', 'data': data, 'status': status, 'jqXHR': _jqXHR});
         if ( status === 'error' ) {
             callback(data, 'request error');
         } else if ( status === 'success' ) {

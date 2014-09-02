@@ -84,8 +84,8 @@ var $ = require('jquery'),
     Buff = require('buffer/').Buffer;
 
 
-function Github() {
-
+function Github(log) {
+    this.log = log;
 }
 
 function extractPaths(items) {
@@ -99,9 +99,11 @@ function extractPaths(items) {
 }
 
 Github.prototype.dir = function(callback, path) {
-    var response,
-        stat;
+    var self = this;
     function f(data, status, _jqXHR) {
+        var response,
+            stat;
+        self.log.push({'type': 'AJAX tree request', 'data': data, 'status': status, 'jqXHR': _jqXHR});
         if ( status === 'error' ) {
             callback(data, 'request error');
         } else if ( status === 'success' ) {
@@ -135,6 +137,7 @@ Github.prototype.file = function(callback, path) {
     // callback receives 2 args:
     //   1. data
     //   2. status -- 'request error' | 'api error' | 'data error' | 'success'
+    var self = this;
     function f(data, status, _jqXHR) {
         // provides an adapter to simplify `callback`:
         //   1. doesn't pass the jqXHR
@@ -143,6 +146,7 @@ Github.prototype.file = function(callback, path) {
         //   3. for success, extracts and base64-decodes content
         var response,
             stat;
+        self.log.push({'type': 'AJAX file request', 'data': data, 'status': status, 'jqXHR': _jqXHR});
         if ( status === 'error' ) {
             callback(data, 'request error');
         } else if ( status === 'success' ) {
@@ -203,6 +207,14 @@ Model.prototype.setRepo = function(path) {
 Model.prototype.setFile = function(filename) {
     var self = this,
         url = self.repo.response[filename];
+    if ( !url ) {
+        self.file = {
+            'filename': filename          ,
+            'status'  : 'illegal filename',
+        };
+        self.notify('setFile');
+        return;
+    }
     function f(response, status) {
         self.file = {
             'filename': filename,
@@ -273,15 +285,12 @@ Analyzer.prototype.success = function(response) {
 };
 
 Analyzer.prototype.displayFile = function(response, status) {
-    console.log('got a response -- ' + status);
+    console.log('displayFile status -- ' + status);
     this.div.empty();
     switch (status) {
         case 'success':
             this.success(response);
             break;
-        case 'request error':
-        case 'api error':
-        case 'data error':
         default:
             this.div.append(status);
             break;
@@ -297,6 +306,7 @@ module.exports = Analyzer;
 
 var $ = require('jquery'),
     G = require('genhtml-js'),
+    serialize = G.serialize.serialize,
     elem = G.html.elem;
 
 // tasks
@@ -308,6 +318,10 @@ function Chooser() {
     this.listeners = [];
 }
 
+function pathsError(status) {
+    return elem('div', {'class': 'error'}, status)
+}
+
 function getOption(filename) {
     return elem('option', {}, filename);
 }
@@ -317,11 +331,11 @@ Chooser.prototype.setPaths = function(filenames, status) {
     // add a change listener
     this.div.empty();
     if ( status !== 'success' ) {
-        this.div.append('<div>' + status + '</div>');
+        this.div.append(serialize(pathsError(status)));
         return;
     }
     var select = elem('select', {}, filenames.map(getOption));
-    this.div.append(G.serialize.serialize(select));
+    this.div.append(serialize(select));
     var s = this.div.find('select'),
         self = this;
     s.change(function() {
@@ -349,20 +363,17 @@ module.exports = Chooser;
 },{"genhtml-js":21,"jquery":25}],6:[function(require,module,exports){
 'use strict';
 
-var $ = require('jquery'),
-    Github = require('./js/github').Github,
-    Model = require('./js/model'),
-    Chooser = require('./js/views/chooser'),
+var $        = require('jquery'),
+    Github   = require('./js/github').Github,
+    Model    = require('./js/model'),
+    Chooser  = require('./js/views/chooser'),
     Analyzer = require('./js/views/analyzer'),
-    Core = require('./js/core');
+    Core     = require('./js/core');
 
 window.$ = $;
-window.Github = Github;
-window.Chooser = Chooser;
-window.Analyzer = Analyzer;
-window.Core = Core;
+window.log = [];
 
-var gh = new Github(),
+var gh = new Github(window.log),
     model = new Model(gh),
     c = new Chooser(),
     a = new Analyzer();

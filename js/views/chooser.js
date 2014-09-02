@@ -2,6 +2,7 @@
 
 var $ = require('jquery'),
     G = require('genhtml-js'),
+    serialize = G.serialize.serialize,
     elem = G.html.elem;
 
 // tasks
@@ -13,6 +14,10 @@ function Chooser() {
     this.listeners = [];
 }
 
+function pathsError(status) {
+    return elem('div', {'class': 'error'}, status)
+}
+
 function getOption(filename) {
     return elem('option', {}, filename);
 }
@@ -22,11 +27,11 @@ Chooser.prototype.setPaths = function(filenames, status) {
     // add a change listener
     this.div.empty();
     if ( status !== 'success' ) {
-        this.div.append('<div>' + status + '</div>');
+        this.div.append(serialize(pathsError(status)));
         return;
     }
     var select = elem('select', {}, filenames.map(getOption));
-    this.div.append(G.serialize.serialize(select));
+    this.div.append(serialize(select));
     var s = this.div.find('select'),
         self = this;
     s.change(function() {

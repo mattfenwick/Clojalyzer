@@ -1,19 +1,16 @@
 'use strict';
 
-var $ = require('jquery'),
-    Github = require('./js/github').Github,
-    Model = require('./js/model'),
-    Chooser = require('./js/views/chooser'),
+var $        = require('jquery'),
+    Github   = require('./js/github').Github,
+    Model    = require('./js/model'),
+    Chooser  = require('./js/views/chooser'),
     Analyzer = require('./js/views/analyzer'),
-    Core = require('./js/core');
+    Core     = require('./js/core');
 
 window.$ = $;
-window.Github = Github;
-window.Chooser = Chooser;
-window.Analyzer = Analyzer;
-window.Core = Core;
+window.log = [];
 
-var gh = new Github(),
+var gh = new Github(window.log),
     model = new Model(gh),
     c = new Chooser(),
     a = new Analyzer();

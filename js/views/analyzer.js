@@ -39,15 +39,12 @@ Analyzer.prototype.success = function(response) {
 };
 
 Analyzer.prototype.displayFile = function(response, status) {
-    console.log('got a response -- ' + status);
+    console.log('displayFile status -- ' + status);
     this.div.empty();
     switch (status) {
         case 'success':
             this.success(response);
             break;
-        case 'request error':
-        case 'api error':
-        case 'data error':
         default:
             this.div.append(status);
             break;
