@@ -20,6 +20,10 @@ body > div {
     min-width: 150px;
 }
 
+#output th {
+    font-size: 125%;
+}
+
 #output tr {
     background: #ffff88;
 }

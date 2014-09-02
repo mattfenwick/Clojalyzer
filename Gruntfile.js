@@ -47,7 +47,7 @@ module.exports = function(grunt) {
             },
             "js": {
                 "options": options,
-                "src": ['js/*.js', 'js/*/*.js']
+                "src": ['main.js', 'js/*.js', 'js/*/*.js']
             }
         }
     });
