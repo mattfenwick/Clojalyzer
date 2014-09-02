@@ -3,21 +3,30 @@
 var $        = require('jquery'),
     Github   = require('./js/github').Github,
     Model    = require('./js/model'),
-    Chooser  = require('./js/views/chooser'),
     Analyzer = require('./js/views/analyzer'),
-    Core     = require('./js/core');
+    FileChooser = require('./js/views/filechooser'),
+    RepoChooser = require('./js/views/repochooser');
 
 window.$ = $;
 window.log = [];
 
 var gh = new Github(window.log),
     model = new Model(gh),
-    c = new Chooser(),
+    c = new FileChooser(),
+    rc = new RepoChooser(),
     a = new Analyzer();
 
 window.model = model;
 
+$("#githubuser").val("clojure");
+$("#githubrepo").val("clojure");
+
+rc.listen(function(username, repo) {
+    model.setRepo(username, repo);
+});
+
 model.listen(function(message) {
+    a.clear();
     if ( message === 'setRepo' ) {
         c.setPaths(Object.keys(model.repo.response), model.repo.status);
     }
@@ -33,7 +42,6 @@ model.listen(function(message) {
     }
 });
 
-model.setRepo('https://api.github.com/repos/clojure/clojure/git/trees/master?recursive=1');
 
 module.exports = {};
 

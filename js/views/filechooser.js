@@ -9,20 +9,20 @@ var $ = require('jquery'),
 //   1. receive a map of filename->url, and display them
 //   2. respond to mouse clicks, sending off the appropriate file
 
-function Chooser() {
+function FileChooser() {
     this.div = $("#input");
     this.listeners = [];
 }
 
 function pathsError(status) {
-    return elem('div', {'class': 'error'}, status)
+    return elem('div', {'class': 'error'}, status);
 }
 
 function getOption(filename) {
     return elem('option', {}, filename);
 }
 
-Chooser.prototype.setPaths = function(filenames, status) {
+FileChooser.prototype.setPaths = function(filenames, status) {
     // put paths into a dropdown
     // add a change listener
     this.div.empty();
@@ -40,18 +40,17 @@ Chooser.prototype.setPaths = function(filenames, status) {
     s.val('');
 };
 
-Chooser.prototype.notify = function() {
-    // send event off to listeners
+FileChooser.prototype.notify = function() {
     var args = Array.prototype.slice.call(arguments);
     this.listeners.forEach(function(f) {
         f.apply(null, args);
     });
 };
 
-Chooser.prototype.listen = function(l) {
+FileChooser.prototype.listen = function(l) {
     this.listeners.push(l);
 };
 
 
-module.exports = Chooser;
+module.exports = FileChooser;
 

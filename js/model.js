@@ -8,10 +8,13 @@ function Model(dataAccess) {
     this.file = undefined;
 }
 
-Model.prototype.setRepo = function(path) {
-    var self = this;
+Model.prototype.setRepo = function(user, repo) {
+    var self = this,
+        path = 'https://api.github.com/repos/' + user + '/' + repo + '/git/trees/master?recursive=1'
     function f(response, status) {
         self.repo = {
+            'user'    : user    ,
+            'repo'    : repo    ,
             'path'    : path    ,
             'response': response,
             'status'  : status  ,
@@ -44,7 +47,6 @@ Model.prototype.setFile = function(filename) {
 };
 
 Model.prototype.notify = function() {
-    // send event off to listeners
     var args = Array.prototype.slice.call(arguments);
     this.listeners.forEach(function(f) {
         f.apply(null, args);

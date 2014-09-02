@@ -51,6 +51,10 @@ Analyzer.prototype.displayFile = function(response, status) {
     }
 };
 
+Analyzer.prototype.clear = function() {
+    this.div.empty();
+};
+
 
 module.exports = Analyzer;
 

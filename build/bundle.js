@@ -76,7 +76,7 @@ module.exports = {
 };
 
 
-},{"clojarse-js":10}],2:[function(require,module,exports){
+},{"clojarse-js":11}],2:[function(require,module,exports){
 'use strict';
 
 
@@ -180,7 +180,7 @@ module.exports = {
 };
 
 
-},{"buffer/":7,"jquery":25}],3:[function(require,module,exports){
+},{"buffer/":8,"jquery":26}],3:[function(require,module,exports){
 'use strict';
 
 
@@ -191,10 +191,13 @@ function Model(dataAccess) {
     this.file = undefined;
 }
 
-Model.prototype.setRepo = function(path) {
-    var self = this;
+Model.prototype.setRepo = function(user, repo) {
+    var self = this,
+        path = 'https://api.github.com/repos/' + user + '/' + repo + '/git/trees/master?recursive=1'
     function f(response, status) {
         self.repo = {
+            'user'    : user    ,
+            'repo'    : repo    ,
             'path'    : path    ,
             'response': response,
             'status'  : status  ,
@@ -227,7 +230,6 @@ Model.prototype.setFile = function(filename) {
 };
 
 Model.prototype.notify = function() {
-    // send event off to listeners
     var args = Array.prototype.slice.call(arguments);
     this.listeners.forEach(function(f) {
         f.apply(null, args);
@@ -297,11 +299,15 @@ Analyzer.prototype.displayFile = function(response, status) {
     }
 };
 
+Analyzer.prototype.clear = function() {
+    this.div.empty();
+};
+
 
 module.exports = Analyzer;
 
 
-},{"./../core":1,"genhtml-js":21,"jquery":25}],5:[function(require,module,exports){
+},{"./../core":1,"genhtml-js":22,"jquery":26}],5:[function(require,module,exports){
 'use strict';
 
 var $ = require('jquery'),
@@ -313,20 +319,20 @@ var $ = require('jquery'),
 //   1. receive a map of filename->url, and display them
 //   2. respond to mouse clicks, sending off the appropriate file
 
-function Chooser() {
+function FileChooser() {
     this.div = $("#input");
     this.listeners = [];
 }
 
 function pathsError(status) {
-    return elem('div', {'class': 'error'}, status)
+    return elem('div', {'class': 'error'}, status);
 }
 
 function getOption(filename) {
     return elem('option', {}, filename);
 }
 
-Chooser.prototype.setPaths = function(filenames, status) {
+FileChooser.prototype.setPaths = function(filenames, status) {
     // put paths into a dropdown
     // add a change listener
     this.div.empty();
@@ -344,43 +350,82 @@ Chooser.prototype.setPaths = function(filenames, status) {
     s.val('');
 };
 
-Chooser.prototype.notify = function() {
-    // send event off to listeners
+FileChooser.prototype.notify = function() {
     var args = Array.prototype.slice.call(arguments);
     this.listeners.forEach(function(f) {
         f.apply(null, args);
     });
 };
 
-Chooser.prototype.listen = function(l) {
+FileChooser.prototype.listen = function(l) {
     this.listeners.push(l);
 };
 
 
-module.exports = Chooser;
+module.exports = FileChooser;
 
 
-},{"genhtml-js":21,"jquery":25}],6:[function(require,module,exports){
+},{"genhtml-js":22,"jquery":26}],6:[function(require,module,exports){
+'use strict';
+
+var $ = require('jquery');
+
+
+function RepoChooser() {
+    this.listeners = [];
+    var self = this;
+    $("#clojalyze").click(function() {
+        var username = $("#githubuser").val(),
+            repo     = $("#githubrepo").val();
+        self.notify(username, repo);
+    });
+}
+
+RepoChooser.prototype.notify = function() {
+    var args = Array.prototype.slice.call(arguments);
+    this.listeners.forEach(function(f) {
+        f.apply(null, args);
+    });
+};
+
+RepoChooser.prototype.listen = function(l) {
+    this.listeners.push(l);
+};
+
+
+module.exports = RepoChooser;
+
+
+},{"jquery":26}],7:[function(require,module,exports){
 'use strict';
 
 var $        = require('jquery'),
     Github   = require('./js/github').Github,
     Model    = require('./js/model'),
-    Chooser  = require('./js/views/chooser'),
     Analyzer = require('./js/views/analyzer'),
-    Core     = require('./js/core');
+    FileChooser = require('./js/views/filechooser'),
+    RepoChooser = require('./js/views/repochooser');
 
 window.$ = $;
 window.log = [];
 
 var gh = new Github(window.log),
     model = new Model(gh),
-    c = new Chooser(),
+    c = new FileChooser(),
+    rc = new RepoChooser(),
     a = new Analyzer();
 
 window.model = model;
 
+$("#githubuser").val("clojure");
+$("#githubrepo").val("clojure");
+
+rc.listen(function(username, repo) {
+    model.setRepo(username, repo);
+});
+
 model.listen(function(message) {
+    a.clear();
     if ( message === 'setRepo' ) {
         c.setPaths(Object.keys(model.repo.response), model.repo.status);
     }
@@ -396,12 +441,11 @@ model.listen(function(message) {
     }
 });
 
-model.setRepo('https://api.github.com/repos/clojure/clojure/git/trees/master?recursive=1');
 
 module.exports = {};
 
 
-},{"./js/core":1,"./js/github":2,"./js/model":3,"./js/views/analyzer":4,"./js/views/chooser":5,"jquery":25}],7:[function(require,module,exports){
+},{"./js/github":2,"./js/model":3,"./js/views/analyzer":4,"./js/views/filechooser":5,"./js/views/repochooser":6,"jquery":26}],8:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -1572,7 +1616,7 @@ function assert (test, message) {
   if (!test) throw new Error(message || 'Failed assertion')
 }
 
-},{"base64-js":8,"ieee754":9}],8:[function(require,module,exports){
+},{"base64-js":9,"ieee754":10}],9:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -1694,7 +1738,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 exports.read = function(buffer, offset, isLE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -1780,7 +1824,7 @@ exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 var P = require('./lib/parser'),
@@ -1815,7 +1859,7 @@ module.exports = {
 };
 
 
-},{"./lib/ast":11,"./lib/astbuilder":12,"./lib/parser":13}],11:[function(require,module,exports){
+},{"./lib/ast":12,"./lib/astbuilder":13,"./lib/parser":14}],12:[function(require,module,exports){
 'use strict';
 
 var S = require('data-js').Set;
@@ -1924,7 +1968,7 @@ module.exports = {
 };
 
 
-},{"data-js":14}],12:[function(require,module,exports){
+},{"data-js":15}],13:[function(require,module,exports){
 'use strict';
 
 var A = require('./ast'),
@@ -2130,7 +2174,7 @@ module.exports = {
 };
 
 
-},{"./ast":11,"data-js":14}],13:[function(require,module,exports){
+},{"./ast":12,"data-js":15}],14:[function(require,module,exports){
 'use strict';
 
 var u = require('unparse-js'),
@@ -2612,7 +2656,7 @@ module.exports = {
 };
 
 
-},{"data-js":14,"unparse-js":17}],14:[function(require,module,exports){
+},{"data-js":15,"unparse-js":18}],15:[function(require,module,exports){
 'use strict';
 
 var D = require('./lib/dict.js'),
@@ -2625,7 +2669,7 @@ module.exports = {
 };
 
 
-},{"./lib/dict.js":15,"./lib/set.js":16}],15:[function(require,module,exports){
+},{"./lib/dict.js":16,"./lib/set.js":17}],16:[function(require,module,exports){
 'use strict';
 
 
@@ -2700,7 +2744,7 @@ Dict.prototype.toString = function() {
 module.exports = Dict;
 
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 var D = require('./dict');
@@ -2742,7 +2786,7 @@ Set.prototype.toString = function() {
 module.exports = Set;
 
 
-},{"./dict":15}],17:[function(require,module,exports){
+},{"./dict":16}],18:[function(require,module,exports){
 'use strict';
 
 
@@ -2755,7 +2799,7 @@ module.exports = {
 };
 
 
-},{"./lib/combinators.js":18,"./lib/cst.js":19,"./lib/maybeerror.js":20}],18:[function(require,module,exports){
+},{"./lib/combinators.js":19,"./lib/cst.js":20,"./lib/maybeerror.js":21}],19:[function(require,module,exports){
 "use strict";
 
 var M = require('./maybeerror.js');
@@ -3293,7 +3337,7 @@ module.exports = {
 };
 
 
-},{"./maybeerror.js":20}],19:[function(require,module,exports){
+},{"./maybeerror.js":21}],20:[function(require,module,exports){
 "use strict";
 
 var C = require('./combinators.js');
@@ -3440,7 +3484,7 @@ module.exports = {
 };
 
 
-},{"./combinators.js":18}],20:[function(require,module,exports){
+},{"./combinators.js":19}],21:[function(require,module,exports){
 "use strict";
 
 var STATUSES = {
@@ -3512,7 +3556,7 @@ MaybeError.zero = new MaybeError('failure', undefined);
 module.exports = MaybeError;
 
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 
@@ -3523,7 +3567,7 @@ module.exports = {
 };
 
 
-},{"./lib/html.js":22,"./lib/model.js":23,"./lib/serialize.js":24}],22:[function(require,module,exports){
+},{"./lib/html.js":23,"./lib/model.js":24,"./lib/serialize.js":25}],23:[function(require,module,exports){
 'use strict';
 
 var model = require('./model.js');
@@ -3587,7 +3631,7 @@ module.exports = {
 };
 
 
-},{"./model.js":23}],23:[function(require,module,exports){
+},{"./model.js":24}],24:[function(require,module,exports){
 'use strict';
 
 
@@ -3658,7 +3702,7 @@ module.exports = {
 };
 
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 var model = require('./model.js');
@@ -3735,7 +3779,7 @@ module.exports = {
 };
 
 
-},{"./model.js":23}],25:[function(require,module,exports){
+},{"./model.js":24}],26:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.0
  * http://jquery.com/
@@ -12848,4 +12892,4 @@ return jQuery;
 
 }));
 
-},{}]},{},[6])
+},{}]},{},[7])

@@ -11,12 +11,30 @@
         <h1>Clojalyzer</h1> 
         
         <div>
-            <div class="instructions">Step 1: choose a Clojure file to analyze</div>
+            <div class="instructions">Step 1: choose a Github repository with Clojure code</div>
+            <table>
+                <tr>
+                    <td>Github username</td>
+                    <td><input id="githubuser" /></td>
+                </tr>
+                <tr>
+                    <td>Repository name</td>
+                    <td><input id="githubrepo" /></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><button id="clojalyze">Clojalyze!</button></td>
+                </tr>
+            </table>
+        </div>
+        
+        <div>
+            <div class="instructions">Step 2: choose a Clojure file to analyze</div>
             <div id="input"></div>
         </div>
         
         <div>
-            <div class="instructions">Step 2: peruse the documentation of the top-level functions</div>
+            <div class="instructions">Step 3: peruse the documentation of the top-level functions</div>
             <div id="output"></div>
         </div>
 
