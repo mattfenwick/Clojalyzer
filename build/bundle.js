@@ -88,10 +88,16 @@ function Github(log) {
     this.log = log;
 }
 
+function endsWith(str, suffix) {
+    // some browsers don't have String.prototype.endsWith
+    // see http://stackoverflow.com/questions/280634/endswith-in-javascript
+    return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
+
 function extractPaths(items) {
     var paths = {};
     items.forEach(function(entry) {
-        if ( entry.path.endsWith('.clj') ) {
+        if ( endsWith(entry.path, '.clj') ) {
             paths[entry.path] = entry.url;
         }
     });
