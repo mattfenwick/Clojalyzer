@@ -12,8 +12,8 @@ function Github() {
 function extractPaths(items) {
     var paths = {};
     items.forEach(function(entry) {
-        if ( entry.type === 'file' ) {
-            paths[entry.name] = entry.url;
+        if ( entry.path.endsWith('.clj') ) {
+            paths[entry.path] = entry.url;
         }
     });
     return paths;
@@ -28,7 +28,7 @@ Github.prototype.dir = function(callback, path) {
         } else if ( status === 'success' ) {
             if ( data.meta.status === 200 ) {
                 try {
-                    response = extractPaths(data.data);
+                    response = extractPaths(data.data.tree);
                     stat = 'success';
                 } catch(e) {
                     response = e;
@@ -41,7 +41,7 @@ Github.prototype.dir = function(callback, path) {
         }
     }
     $.ajax({
-        'url'       : path ? path : 'https://api.github.com/repos/clojure/clojure/contents/src/clj/clojure',
+        'url'       : path   ,
         'dataType'  : 'jsonp',
         'success'   : f      ,
         'error'     : f      ,
@@ -82,7 +82,7 @@ Github.prototype.file = function(callback, path) {
         }
     }
     $.ajax({
-        'url'       : path ? path : 'https://api.github.com/repos/clojure/clojure/contents/src/clj/clojure/edn.clj',
+        'url'       : path   ,
         'dataType'  : 'jsonp',
         'success'   : f      ,
         'error'     : f      ,

@@ -91,8 +91,8 @@ function Github() {
 function extractPaths(items) {
     var paths = {};
     items.forEach(function(entry) {
-        if ( entry.type === 'file' ) {
-            paths[entry.name] = entry.url;
+        if ( entry.path.endsWith('.clj') ) {
+            paths[entry.path] = entry.url;
         }
     });
     return paths;
@@ -107,7 +107,7 @@ Github.prototype.dir = function(callback, path) {
         } else if ( status === 'success' ) {
             if ( data.meta.status === 200 ) {
                 try {
-                    response = extractPaths(data.data);
+                    response = extractPaths(data.data.tree);
                     stat = 'success';
                 } catch(e) {
                     response = e;
@@ -120,7 +120,7 @@ Github.prototype.dir = function(callback, path) {
         }
     }
     $.ajax({
-        'url'       : path ? path : 'https://api.github.com/repos/clojure/clojure/contents/src/clj/clojure',
+        'url'       : path   ,
         'dataType'  : 'jsonp',
         'success'   : f      ,
         'error'     : f      ,
@@ -161,7 +161,7 @@ Github.prototype.file = function(callback, path) {
         }
     }
     $.ajax({
-        'url'       : path ? path : 'https://api.github.com/repos/clojure/clojure/contents/src/clj/clojure/edn.clj',
+        'url'       : path   ,
         'dataType'  : 'jsonp',
         'success'   : f      ,
         'error'     : f      ,
@@ -202,7 +202,7 @@ Model.prototype.setRepo = function(path) {
 
 Model.prototype.setFile = function(filename) {
     var self = this,
-        url = self.repo.path + '/' + filename;
+        url = self.repo.response[filename];
     function f(response, status) {
         self.file = {
             'filename': filename,
@@ -312,10 +312,14 @@ function getOption(filename) {
     return elem('option', {}, filename);
 }
 
-Chooser.prototype.setPaths = function(filenames) {
+Chooser.prototype.setPaths = function(filenames, status) {
     // put paths into a dropdown
     // add a change listener
     this.div.empty();
+    if ( status !== 'success' ) {
+        this.div.append('<div>' + status + '</div>');
+        return;
+    }
     var select = elem('select', {}, filenames.map(getOption));
     this.div.append(G.serialize.serialize(select));
     var s = this.div.find('select'),
@@ -363,9 +367,11 @@ var gh = new Github(),
     c = new Chooser(),
     a = new Analyzer();
 
+window.model = model;
+
 model.listen(function(message) {
     if ( message === 'setRepo' ) {
-        c.setPaths(Object.keys(model.repo.response));
+        c.setPaths(Object.keys(model.repo.response), model.repo.status);
     }
 });
 
@@ -379,7 +385,7 @@ model.listen(function(message) {
     }
 });
 
-model.setRepo('https://api.github.com/repos/clojure/clojure/contents/src/clj/clojure');
+model.setRepo('https://api.github.com/repos/clojure/clojure/git/trees/master?recursive=1');
 
 module.exports = {};
 

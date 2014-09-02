@@ -17,10 +17,14 @@ function getOption(filename) {
     return elem('option', {}, filename);
 }
 
-Chooser.prototype.setPaths = function(filenames) {
+Chooser.prototype.setPaths = function(filenames, status) {
     // put paths into a dropdown
     // add a change listener
     this.div.empty();
+    if ( status !== 'success' ) {
+        this.div.append('<div>' + status + '</div>');
+        return;
+    }
     var select = elem('select', {}, filenames.map(getOption));
     this.div.append(G.serialize.serialize(select));
     var s = this.div.find('select'),

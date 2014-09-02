@@ -23,7 +23,7 @@ Model.prototype.setRepo = function(path) {
 
 Model.prototype.setFile = function(filename) {
     var self = this,
-        url = self.repo.path + '/' + filename;
+        url = self.repo.response[filename];
     function f(response, status) {
         self.file = {
             'filename': filename,

@@ -18,9 +18,11 @@ var gh = new Github(),
     c = new Chooser(),
     a = new Analyzer();
 
+window.model = model;
+
 model.listen(function(message) {
     if ( message === 'setRepo' ) {
-        c.setPaths(Object.keys(model.repo.response));
+        c.setPaths(Object.keys(model.repo.response), model.repo.status);
     }
 });
 
@@ -34,7 +36,7 @@ model.listen(function(message) {
     }
 });
 
-model.setRepo('https://api.github.com/repos/clojure/clojure/contents/src/clj/clojure');
+model.setRepo('https://api.github.com/repos/clojure/clojure/git/trees/master?recursive=1');
 
 module.exports = {};
 
