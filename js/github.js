@@ -104,5 +104,6 @@ module.exports = {
     'Github'      : Github      ,
     'extractPaths': extractPaths,
     'decode'      : decode      ,
+    'endsWith'    : endsWith    ,
 };
 
