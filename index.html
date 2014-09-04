@@ -4,13 +4,20 @@
        <meta charset="utf-8" /> 
        <title>The Clojalyzer</title> 
        <link href="style/style.css" rel="stylesheet" type="text/css" />
+       <link href="style/forkme.css" rel="stylesheet" type="text/css" />
     </head>
 
     <body>
 
+        <div class="github-fork-ribbon-wrapper right">
+            <div class="github-fork-ribbon">
+                <a href="https://github.com/mattfenwick/Clojalyzer">Fork me on GitHub</a>
+            </div>
+        </div>
+
         <h1>The Clojalyzer</h1> 
         
-        <div>
+        <div class="step">
             <div class="instructions">Step 1: choose a Github repository with Clojure code</div>
             <table>
                 <tr>
@@ -32,12 +39,12 @@
             </table>
         </div>
         
-        <div>
+        <div class="step">
             <div class="instructions">Step 2: choose a Clojure file to analyze</div>
             <div id="input"></div>
         </div>
         
-        <div>
+        <div class="step">
             <div class="instructions">Step 3: peruse the documentation of the top-level functions</div>
             <div id="output"></div>
         </div>
